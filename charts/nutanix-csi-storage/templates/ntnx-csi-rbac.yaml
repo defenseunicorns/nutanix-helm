@@ -7,6 +7,8 @@
 ---
 apiVersion: v1
 kind: ServiceAccount
+imagePullSecrets:
+- name: private-registry
 metadata:
   name: nutanix-csi-controller
   namespace: {{ .Release.Namespace }}
@@ -76,6 +78,8 @@ roleRef:
 ---
 apiVersion: v1
 kind: ServiceAccount
+imagePullSecrets:
+- name: private-registry
 metadata:
   name: nutanix-csi-node
   namespace: {{ .Release.Namespace }}
