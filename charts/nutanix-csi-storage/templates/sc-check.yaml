@@ -1,0 +1,47 @@
+# This checks for existing pv's which has volume attribute as
+# isLVMVolume="true" and fails the installation and upgrade if found.
+{{- $pvs := lookup "v1" "PersistentVolume" "" "" -}}
+{{- range $pv := $pvs.items }}
+  {{- if and $pv.spec $pv.spec.csi $pv.spec.csi.volumeAttributes }}
+    {{- $attributes := $pv.spec.csi.volumeAttributes }}
+    {{- if and $attributes (eq (index $attributes "isLVMVolume") "true") }}
+      {{- fail (printf "%s%s" "Upgrade is not allowed due to the presence of LVM volume, PV:" $pv.metadata.name) -}}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+{{- $releaseName := .Release.Name -}}
+
+# This checks for the existing storage classes which has annotaion
+# meta.helm.sh/release-name set to the release name of csi installation or upgrade
+# If storageclasses are found we retain it.
+{{- $storageClasses := lookup "storage.k8s.io/v1" "StorageClass" "" "" -}}
+{{- if $storageClasses.items }}
+  {{- range $index, $sc := $storageClasses.items }}
+    {{- if and $sc.metadata $sc.metadata.annotations }}
+      {{- if and (hasKey $sc.metadata.annotations "meta.helm.sh/release-name") (eq (index $sc.metadata.annotations "meta.helm.sh/release-name") $releaseName) }}
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ $sc.metadata.name }}
+  annotations:
+    {{- range $key, $value := $sc.metadata.annotations }}
+    {{ $key }}: {{ printf "%v" $value | quote }}
+    {{- end }}
+  labels:
+    {{- range $key, $value := $sc.metadata.labels }}
+    {{ $key }}: {{ printf "%v" $value | quote }}
+    {{- end }}
+provisioner: {{ $sc.provisioner }}
+parameters:
+  {{- range $key, $value := $sc.parameters }}
+  {{ $key }}: {{ printf "%v" $value | quote }}
+  {{- end }}
+reclaimPolicy: {{ $sc.reclaimPolicy }}
+volumeBindingMode: {{ $sc.volumeBindingMode }}
+allowVolumeExpansion: {{ $sc.allowVolumeExpansion }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}

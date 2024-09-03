@@ -21,11 +21,11 @@ If this is your first deployment and your Kubernetes Distribution does not bundl
 Please note that starting with v2.2.0, Nutanix CSI driver has changed format of driver name from com.nutanix.csi to csi.nutanix.com. All deployment yamls uses this new driver name format. However, if you initially installed CSI driver in version < v2.2.0 then you should need to continue to use old driver name com.nutanix.csi by setting `legacy` parameter to `true`. If not existing PVC/PV will not work with the new driver name.
 
 ## Nutanix CSI driver documentation
-https://portal.nutanix.com/page/documents/details?targetId=CSI-Volume-Driver-v2_6:CSI-Volume-Driver-v2_6
+https://portal.nutanix.com/page/documents/details?targetId=CSI-Volume-Driver-v3_0:CSI-Volume-Driver-v3_0
 
 ## Features list
 
-- Nutanix CSI Driver v2.6.10
+- Nutanix CSI Driver v3.0.0
 - Nutanix Volumes support
 - Nutanix Files support
 - Volume clone
@@ -43,28 +43,52 @@ https://portal.nutanix.com/page/documents/details?targetId=CSI-Volume-Driver-v2_
 
 - Kubernetes 1.20 or later
 - Kubernetes worker nodes must have the iSCSI package installed (Nutanix Volumes mode) and/or NFS tools (Nutanix Files mode)
-- This chart have been validated on RHEL/CentOS/Rocky 7/8/9 and Ubuntu 18.04/20.04/21.04/21.10/22.05, but the new architecture enables easy portability to other distributions.
+- This chart have been validated on RHEL/CentOS/Rocky 8/9 and Ubuntu 18.04/20.04/21.04/21.10/22.05, but the new architecture enables easy portability to other distributions.
 
 ## Installing the Chart
 
 To install the chart with the name `nutanix-csi`:
 
 ```console
-helm repo add nutanix https://nutanix.github.io/helm/
+wget https://github.com/nutanix/helm-releases/releases/download/nutanix-csi-storage-3.0.0/nutanix-csi-storage-3.0.0.tgz
+```
 
-helm install nutanix-csi nutanix/nutanix-csi-storage -n <namespace of your choice>
+After downloading the chart you can directly set the values and install:
+
+```console
+helm install nutanix-csi nutanix-csi-storage-3.0.0.tgz --set <key>=<value> -n <namespace of your choice>
+```
+
+Or you can unzip, set values and then install:
+
+```console
+tar -xvf nutanix-csi-storage-3.0.0.tgz
+
+helm install nutanix-csi nutanix-csi-storage-3.0.0 -n <namespace of your choice>
 ```
 
 ## Upgrade
 
-Upgrades can be done using the normal Helm upgrade mechanism
+To upgrade the chart with the name `nutanix-csi`:
 
-```
-helm repo update
-helm upgrade nutanix-csi nutanix/nutanix-csi-storage
+```console
+wget https://github.com/nutanix/helm-releases/releases/download/nutanix-csi-storage-3.0.0/nutanix-csi-storage-3.0.0.tgz
 ```
 
-Warning: If you have created StorageClass during the Helm chart install your upgrade will failed because StorageClass is immutable. You can remove your automatically created StorageClass before upgrade and they will be recreated during Helm upgrade. You can also decide to not create StorageClass with Helm chart and do it manually to avoid upgrade complexity.
+After downloading the chart you can directly set the values and upgrade:
+
+```console
+helm upgrade nutanix-csi nutanix-csi-storage-3.0.0.tgz --set <key>=<value> -n <namespace of your choice>
+```
+
+Or you can unzip, set values and then upgrade:
+
+```console
+tar -xvf nutanix-csi-storage-3.0.0.tgz
+
+helm upgrade nutanix-csi nutanix-csi-storage -n <namespace of your choice>
+```
+
 
 ### Upgrading from yaml based deployment
 Starting with CSI driver v2.5.0, yaml based deployment is discontinued. So to upgrade from yaml based deployment, you need to patch your existing CSI deployment with helm annotations. Please follow the following procedure.
@@ -109,47 +133,41 @@ helm delete nutanix-csi -n <namespace of your choice>
 
 The following table lists the configurable parameters of the Nutanix-CSI chart and their default values.
 
-| Parameter                     | Description                                                                                 | Default                |
-|-------------------------------|---------------------------------------------------------------------------------------------|------------------------|
-| `legacy`                      | Use old reverse notation for CSI driver name                                                | `false`                |
-| `volumeClass`                 | Activate Nutanix Volumes Storage Class                                                      | `false`                |
-| `volumeClassName`             | Name of the Nutanix Volumes Storage Class                                                   | `nutanix-volume`       |
-| `volumeClassDescription`      | Description prefix for each created VG                                                      | `volumeClassName`      |
-| `volumeClassRetention`        | Retention policy for the Volumes Storage Class (Delete, Retain)                             | `Delete`               |
-| `fileClass`                   | Activate Nutanix Files Storage Class                                                        | `false`                |
-| `fileClassName`               | Name of the Nutanix Files Storage Class                                                     | `nutanix-file`         |
-| `fileClassRetention`          | Retention policy for the Files Storage Class (Delete, Retain)                               | `Delete`               |
-| `dynamicFileSquashType`       | Squash type for Nutanix Dynamic File Storage (none, root-squash, all-squash)                | `root-squash`          |
-| `dynamicFileClass`            | Activate Nutanix Dynamic Files Storage Class                                                | `false`                |
-| `dynamicFileClassName`        | Name of the Nutanix Dynamic Files Storage Class                                             | `nutanix-dynamicfile`  |
-| `dynamicFileClassDescription` | Description prefix for each created Fileshare                                               | `dynamicFileClassName` |
-| `dynamicFileClassRetention`   | Retention policy for the Dynamic Files Storage Class (Delete, Retain)                       | `Delete`               |
-| `defaultStorageClass`         | Choose your default Storage Class (none, volume, file, dynfile)                             | `none`                 |
-| `prismEndPoint`               | Prism Element (PE) cluster Virtual IP Address or fully qualified domain name (FQDN)         |                        |
-| `username`                    | Username of a Prism Element (PE) cluster admin (if created)                                 |                        |
-| `password`                    | Password for the Prism Element (PE) cluster admin (if created)                              |                        |
-| `secretName`                  | Secret name that stores Prism Element (PE) cluster credentials                              | `ntnx-secret`          |
-| `createSecret`                | Create secret for admin role (if false use existing)                                        | `true`                 |
-| `storageContainer`            | Name of the Nutanix storage container                                                       |                        |
-| `fsType`                      | Type of file system used inside Volume PV (ext4, xfs)                                       | `xfs`                  |
-| `networkSegmentation`         | Activate Volumes Network Segmentation support                                               | `false`                |
-| `lvmVolume`                   | Activate LVM to use multiple vdisks by Volume                                               | `false`                |
-| `lvmDisks`                    | Number of vdisks by volume if lvm enabled                                                   | `4`                    |
-| `fileHost`                    | NFS server fully qualified domain name (FQDN) or IP address                                 |                        |
-| `filePath`                    | Path of the NFS share                                                                       |                        |
-| `fileServerName`              | Name of the Nutanix File Server (As seen in the Prism Interface)                            |                        |
-| `kubeletDir`                  | allows overriding the host location of kubelet's internal state                             | `/var/lib/kubelet`     |
-| `nodeSelector`                | Add nodeSelector to all pods                                                                | `{}`                   |
-| `tolerations`                 | Add tolerations to all pods                                                                 | `[]`                   |
-| `imagePullPolicy`             | Specify imagePullPolicy for all pods                                                        | `IfNotPresent`         |
-| `controller.replicas`         | Number of Controllers replicas to deploy.                                                   | `2`                    |
-| `controller.nodeSelector`     | Add nodeSelector to provisioner pod                                                         | `{}`                   |
-| `controller.tolerations`      | Add tolerations to provisioner pod                                                          | `[]`                   |
-| `node.nodeSelector`           | Add nodeSelector to node pods                                                               | `{}`                   |
-| `node.tolerations`            | Add tolerations to node pods                                                                | `[]`                   |
-| `servicemonitor.enabled`      | Create ServiceMonitor to scrape CSI  metrics                                                | `false`                |
-| `servicemonitor.labels`       | Labels to add to the ServiceMonitor (for match the Prometheus serviceMonitorSelector logic) | `k8s-app: csi-driver`  |
-
+| Parameter                        | Description                                                                                 | Default                  |
+|----------------------------------|---------------------------------------------------------------------------------------------|--------------------------|
+| `legacy`                         | Use old reverse notation for CSI driver name                                                | `false`                  |
+| `createVolumeSnapshotClass`      | Volumesnapshotclass will be created as part of the deployment                               | `true`                   |
+| `volumeSnapshotClassName`        | Name of the volumesnapshotclass                                                             | `nutanix-snapshot-class` |
+| `volumeSnapshotClassAnnotations` | Annotations to add to the volumesnapshotclass                                               | {}                       |
+| `volumeSnapshotClassLabels`      | Labels to add to the volumesnapshotclass                                                    | {}                       |
+| `volumeSnapshotClassRetention`   | Retention policy for the volumesnapshotclass (Delete, Retain)                               | `Retain`                 |
+| `createPrismCentralSecret`       | Create secret for PC account (if false use existing)                                        |  `true`                        |
+| `prismCentralEndPoint`           | Prism Central (PC) cluster Virtual IP Address or fully qualified domain name (FQDN)         |                          |
+| `pcUsername`                     | Username of a Prism Central (PC) cluster admin (if created)                                 |                          |
+| `pcPassword`                     | Password for the Prism Central (PC) cluster admin (if created)                              |                          |
+| `pcSecretName`                   | Secret name that stores Prism Central (PC) cluster credentials                              |                          |
+| `createSecret`                   | Create secret for PE account (if false use existing)                                        | `true`                  |
+| `prismEndPoint`                  | Prism Element (PE) cluster Virtual IP Address or fully qualified domain name (FQDN)         |                          |
+| `username`                       | Username of a Prism Element (PE) cluster admin (if created)                                 |                          |
+| `password`                       | Password for the Prism Element (PE) cluster admin (if created)                              |                          |
+| `secretName`                     | Secret name that stores Prism Element (PE) cluster credentials                              | `ntnx-secret`            |
+| `filesKey.endpoint`              | FileServer FQDN or FileServer IP (used for snapshot feature)                                |                          |
+| `filesKey.username`              | FileServer REST API Username (used for snapshot feature)                                    |                          |
+| `filesKey.password`              | FileServer REST API Password (used for snapshot feature)                                    |
+| `ntnxInitConfigMap.associateCategoriesToVolume`          | set it to true if categories should be associated to the volume | `true`    |                          |
+| `kubeletDir`                     | allows overriding the host location of kubelet's internal state                             | `/var/lib/kubelet`       |
+| `nodeSelector`                   | Add nodeSelector to all pods                                                                | `{}`                     |
+| `tolerations`                    | Add tolerations to all pods                                                                 | `[]`                     |
+| `imagePullPolicy`                | Specify imagePullPolicy for all pods                                                        | `IfNotPresent`           |
+| `maxVolumesPerNode`                | maximum volumes allowed per node                                                        | `64`           |
+| `controller.replicas`            | Number of Controllers replicas to deploy.                                                   | `2`                      |
+| `controller.nodeSelector`        | Add nodeSelector to provisioner pod                                                         | `{}`                     |
+| `controller.tolerations`         | Add tolerations to provisioner pod                                                          | `[]`                     |
+| `node.nodeSelector`              | Add nodeSelector to node pods                                                               | `{}`                     |
+| `node.tolerations`               | Add tolerations to node pods                                                                | `[]`                     |
+| `servicemonitor.enabled`         | Create ServiceMonitor to scrape CSI  metrics                                                | `false`                  |
+| `servicemonitor.labels`          | Labels to add to the ServiceMonitor (for match the Prometheus serviceMonitorSelector logic) | `k8s-app: csi-driver`    |
+| `kubernetesClusterDeploymentType`          | Takes values in ["non-bare-metal", "bare-metal"] depending on the type of deployment | `non-bare-metal`    |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install` or provide a a file whit `-f value.yaml`.
 
@@ -164,7 +182,7 @@ helm install nutanix-storage nutanix/nutanix-csi-storage -n ntnx-system --create
 Install the driver in the `ntnx-system` namespace and create a volume storageclass:
 
 ```console
-helm install nutanix-storage nutanix/nutanix-csi-storage -n ntnx-system --create-namespace --set volumeClass=true --set prismEndPoint=X.X.X.X --set username=admin --set password=xxxxxxxxx --set storageContainer=container_name --set fsType=xfs
+helm install nutanix-storage nutanix/nutanix-csi-storage -n ntnx-system --create-namespace --set prismEndPoint=X.X.X.X --set username=admin --set password=xxxxxxxxx
 ```
 In the above command  `prismEndpoint` refers to the Prism Element cluster virtual ip address where storage will be consumed. 
 
@@ -172,7 +190,7 @@ In the above command  `prismEndpoint` refers to the Prism Element cluster virtua
 Install the driver in the `ntnx-system` namespace, create a volume and a dynamic file storageclass and set the volume storage class as default:
 
 ```console
-helm install nutanix-storage nutanix/nutanix-csi-storage -n ntnx-system --create-namespace --set volumeClass=true --set prismEndPoint=X.X.X.X --set username=admin --set password=xxxxxxxxx --set storageContainer=container_name --set fsType=xfs --set defaultStorageClass=volume --set dynamicFileClass=true --set fileServerName=name_of_the_file_server
+helm install nutanix-storage nutanix/nutanix-csi-storage -n ntnx-system --create-namespace --set prismEndPoint=X.X.X.X --set username=admin --set password=xxxxxxxxx
 ```
 In the above command  `prismEndpoint` refers to the Prism Element cluster virtual ip address where storage will be consumed.
 

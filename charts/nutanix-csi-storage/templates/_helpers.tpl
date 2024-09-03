@@ -41,3 +41,24 @@ com.nutanix.csi
 csi.nutanix.com
 {{- end -}}
 {{- end -}}
+
+{{/*
+Common labels
+*/}}
+{{- define "nutanix-csi-storage.labels" -}}
+helm.sh/chart: {{ include "nutanix-csi-storage.chart" . }}
+{{ include "nutanix-csi-storage.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "nutanix-csi-storage.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "nutanix-csi-storage.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+

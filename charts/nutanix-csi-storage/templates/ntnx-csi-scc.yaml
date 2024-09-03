@@ -3,6 +3,8 @@ kind: SecurityContextConstraints
 apiVersion: security.openshift.io/v1
 metadata:
   name: ntnx-csi-scc
+  labels:
+    {{- include "nutanix-csi-storage.labels" . | nindent 4 }}
 allowHostDirVolumePlugin: true
 allowHostIPC: false
 allowHostNetwork: true

@@ -7,6 +7,8 @@ apiVersion: apps/v1
 metadata:
   name: nutanix-csi-node
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "nutanix-csi-storage.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
@@ -14,12 +16,18 @@ spec:
   updateStrategy:
     type: "RollingUpdate"
     rollingUpdate:
-      maxUnavailable: 10%
+      maxUnavailable: "10%"
   template:
     metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: nutanix-csi-node
       labels:
         app: nutanix-csi-node
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       serviceAccount: nutanix-csi-node
       hostNetwork: true
       containers:
@@ -40,9 +48,12 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
           resources:
+            limits:
+              cpu: 100m
+              memory: 200Mi
             requests:
               cpu: 100m
-              memory: 20Mi
+              memory: 200Mi
           volumeMounts:
             - name: plugin-dir
               mountPath: /csi/
@@ -52,12 +63,14 @@ spec:
           securityContext:
             privileged: true
             allowPrivilegeEscalation: true
-          image: {{ .Values.node.image }}
+          image: {{ .Values.node.imageRepo }}/{{ .Values.node.imageName }}:{{ .Values.node.tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           args :
             - "--endpoint=$(CSI_ENDPOINT)"
             - "--nodeid=$(NODE_ID)"
             - "--drivername={{ include "nutanix-csi-storage.drivername" . }}"
+            - "--max-volumes-per-node={{ .Values.maxVolumesPerNode }}"
+            # - --volume-capacity-threshold=50.0
           env:
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
@@ -69,11 +82,22 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+            - name: CSI_SECRET_DIR
+              value: {{ .Values.csiSecretDir }}
+            - name: CSI_INIT_CONFIGMAP_NAME
+              value: {{  .Values.ntnxInitConfigMap.name }}
+            - name: CSI_INIT_CONFIGMAP_NAMESPACE
+              value: {{  .Values.ntnxInitConfigMap.namespace }}
+            - name: CSI_PLUGIN_TYPE
+              value: NODE_PLUGIN
+          {{- with .Values.node.resources }}
           resources:
-            requests:
-              cpu: 100m
-              memory: 200Mi
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           volumeMounts:
+            - mountPath: {{ .Values.csiSecretDir }}
+              name: pc-secret
+              readOnly: true
             - name: plugin-dir
               mountPath: /csi
             - name: pods-mount-dir
@@ -97,10 +121,10 @@ spec:
             httpGet:
               path: /healthz
               port: http-endpoint
-            initialDelaySeconds: 10
-            timeoutSeconds: 3
-            periodSeconds: 2
-            failureThreshold: 3
+            initialDelaySeconds: {{ .Values.liveness.node.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.liveness.node.timeoutSeconds }}
+            periodSeconds: {{ .Values.liveness.node.periodSeconds }}
+            failureThreshold: {{ .Values.liveness.node.failureThreshold }}
         - name: liveness-probe
           resources:
             requests:
@@ -151,3 +175,6 @@ spec:
           hostPath:
             path: /
             type: Directory
+        - name: pc-secret
+          secret:
+            secretName: {{ .Values.pcSecretName }}

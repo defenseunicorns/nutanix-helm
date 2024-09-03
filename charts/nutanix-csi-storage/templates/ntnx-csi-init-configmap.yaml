@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.ntnxInitConfigMap.name }}
+  namespace: {{ .Values.ntnxInitConfigMap.namespace }}
+  labels:
+    {{- include "nutanix-csi-storage.labels" . | nindent 4 }}
+data:
+  kubernetesClusterDeploymentType: {{ .Values.kubernetesClusterDeploymentType }}
+  usePC: "true"
+  {{- if eq .Values.ntnxInitConfigMap.associateCategoriesToVolume true }}
+  associateCategoriesToVolume: "true"
+  {{- else }}
+  associateCategoriesToVolume: "false"
+  {{- end }}

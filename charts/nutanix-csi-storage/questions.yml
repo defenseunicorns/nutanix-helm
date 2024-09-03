@@ -1,131 +1,174 @@
 questions:
-  - variable: volumeClass
-    label: "Volumes Storage Class"
-    type: boolean
-    default: true
-    description: "Activate Nutanix Volumes Storage Class"
-    group: "global Settings"
-  - variable: fileClass
-    label: "Files Storage Class"
-    type: boolean
-    default: false
-    description: "Activate Nutanix Files Storage Class"
-    group: "global Settings"
-  - variable: dynamicFileClass
-    label: "Dynamic Files Storage Class"
-    type: boolean
-    default: false
-    description: "Activate Nutanix Files Storage Class with dynamic share provisioning"
-    group: "global Settings"
   - variable: legacy
     label: "Driver Name Legacy mode"
     type: boolean
     default: false
     description: "Set to True to continue to use old driver name in case of initial install with chart < 2.2.0"
     group: "global Settings"
-  - variable: defaultStorageClass
-    label: "Default Storage Class"
-    type: enum
-    default: "none"
-    options: ["none", "volume", "file", "dynfile"]
-    description: "Select the default Storage Class you want"
+  
+  - variable: csiCategoryConfigmapName
+    label: "CSI Category ConfigMap Name"
+    description: "Enter the name of the CSI Category ConfigMap"
+    type: string
+    required: false
+    default: "ntnx-cluster-configmap"
+    group: "Global Settings"
+
+  - variable: csiCategoryConfigmapNamespace
+    label: "CSI Category ConfigMap Namespace"
+    description: "Enter the namespace of the CSI Category ConfigMap"
+    type: string
+    required: false
+    default: "ntnx-system"
+    group: "Global Settings"
+
+  - variable: createSecret
+    label: "Create Secret"
+    description: "Do you want to create a (Prism Element) secret?"
+    type: boolean
+    required: true
+    default: true
     group: "global Settings"
-    show_if: "volumeClass=true||dynamicFileClass=true||fileClass=true"
 
   - variable: prismEndPoint
     label: "Prism Endpoint"
     type: string
     required: true
-    description: "Please specify the cluster virtual address"
+    description: "Please specify the cluster(Prism Element) virtual address"
     group: "global Settings"
-    show_if: "volumeClass=true||dynamicFileClass=true"
+    show_if: "createSecret=true"
+
   - variable: username
     label: "Username"
     type: string
     required: true
-    description: "Specify username with cluster admin permission"
+    description: "Specify username with cluster(Prism Element) admin permission"
     group: "global Settings"
-    show_if: "volumeClass=true||dynamicFileClass=true"
+    show_if: "createSecret=true"
+    
   - variable: password
     label: "Password"
     type: password
     required: true
-    description: "Specify password of the user"
+    description: "Specify password of the user(Prism Element)"
     group: "global Settings"
-    show_if: "volumeClass=true||dynamicFileClass=true"
+    show_if: "createSecret=true"
 
-  - variable: servicemonitor.enabled
-    label: "Prometheus ServiceMonitor"
+  - variable: createPrismCentralSecret
+    label: "Create Prism Central Secret"
+    description: "Do you want to create a new Prism Central secret?"
     type: boolean
-    default: false
-    description: "Activate Prometheus ServiceMonitor to scrape CSI metrics"
+    required: true
+    default: true
+    group: "Global Settings"
+
+  - variable: prismCentralEndPoint
+    label: "Prism Central Endpoint"
+    description: "Enter the Prism Central endpoint"
+    type: string
+    required: true
+    default: "00.00.00.00"
+    group: "Global Settings"
+    show_if: "createPrismCentralSecret"
+
+  - variable: pcUsername
+    label: "Prism Central Username"
+    description: "Enter the Prism Central username"
+    type: string
+    required: true
+    default: "username"
+    group: "Global Settings"
+    show_if: "createPrismCentralSecret"
+
+  - variable: pcPassword
+    label: "Prism Central Password"
+    description: "Enter the Prism Central password"
+    type: password
+    required: true
+    default: "password"
+    group: "Global Settings"
+    show_if: "createPrismCentralSecret"
+
+  - variable: filesKey.endpoint
+    label: "filesKey.Endpoint"
+    description: "FileServer FQDN or FileServer IP"
+    type: "string"
+    required: false
     group: "global Settings"
 
-  - variable: storageContainer
-    label: "Storage Container"
-    type: string
-    required: true
-    description: "Specify Nutanix container name where the Persistent Volume will be stored"
-    group: "Nutanix Volumes Settings"
-    show_if: "volumeClass=true"
-  - variable: fsType
-    label: "Filesystem"
-    type: enum
-    options: ["xfs", "ext4"]
-    description: "Select the filesystem for the Persistent Volume"
-    group: "Nutanix Volumes Settings"
-    show_if: "volumeClass=true"
-  - variable: networkSegmentation
-    label: "Volumes Network Segmentation"
-    type: boolean
-    default: false
-    description: "Activate Volumes Network Segmentation support"
-    group: "Nutanix Volumes Settings"
-    show_if: "volumeClass=true"
-  - variable: lvmVolume
-    label: "LVM Volume"
-    type: boolean
-    default: false
-    description: "Activate LVM to support multi vdisks volume group for PV"
-    group: "Nutanix Volumes Settings"
-    show_if: "volumeClass=true"
-  - variable: lvmDisks
-    label: "LVM Disks"
-    type: int
-    required: true
-    default: "4"
-    min: 1
-    max: 8
-    description: "Number of vdisk for each PV"
-    group: "Nutanix Volumes Settings"
-    show_if: "lvmVolume=true&&volumeClass=true"
+  - variable: filesKey.username
+    label: "filesKey.Username"
+    description: "Files endpoint REST API Username"
+    type: "string"
+    required: false
+    group: "global Settings"
 
-  - variable: fileHost
-    label: "File Server Address"
+  - variable: filesKey.password
+    label: "filesKey.Password"
+    description: "REST API Password"
+    type: "string"
+    required: false
+    group: "global Settings"
+  
+  - variable: createVolumeSnapshotClass
+    label: "Create Volume Snapshot Class"
+    description: "Do you want to create a new Volume Snapshot Class?"
+    type: boolean
+    required: true
+    default: true
+    group: "Global Settings"
+
+  - variable: volumeSnapshotClassName
+    label: "Volume Snapshot Class Name"
+    description: "Enter the name for the Volume Snapshot Class"
     type: string
     required: true
-    description: "Specify Nutanix Files address"
-    group: "Nutanix Files Settings"
-    show_if: "fileClass=true"
-  - variable: filePath
-    label: "Export share"
+    default: "nutanix-snapshot-class"
+    group: "Global Settings"
+    show_if: "createVolumeSnapshotClass"
+
+  - variable: volumeSnapshotClassAnnotations
+    label: "Volume Snapshot Class Annotations"
+    description: "Enter annotations for the Volume Snapshot Class"
+    type: yaml
+    required: false
+    default: {}
+    group: "Global Settings"
+    show_if: "createVolumeSnapshotClass"
+
+  - variable: volumeSnapshotClassLabels
+    label: "Volume Snapshot Class Labels"
+    description: "Enter labels for the Volume Snapshot Class"
+    type: yaml
+    required: false
+    default: {}
+    group: "Global Settings"
+    show_if: "createVolumeSnapshotClass"
+
+  - variable: volumeSnapshotClassRetention
+    label: "Volume Snapshot Class Retention Policy"
+    description: "Enter the retention policy for the Volume Snapshot Class"
     type: string
     required: true
-    description: "Specify Nutanix Files share path"
-    group: "Nutanix Files Settings"
-    show_if: "fileClass=true"
-  - variable: fileServerName
-    label: "NFS File Server Name"
-    type: string
+    default: "Retain"
+    group: "Global Settings"
+    show_if: "createVolumeSnapshotClass"
+  
+  - variable: ntnxInitConfigMap.associateCategoriesToVolume
+    label: "Associate Categories to Volume"
+    description: "set it to true if categories should be associated to the volume"
+    type: "boolean"
+    required: false
+    group: "global Settings"
+    default: false
+  
+  - variable: kubernetesClusterDeploymentType
+    label: "Kubernetes Cluster Deployment Type"
+    description: "Takes values in ['non-bare-metal', 'bare-metal'] depending on the type of deployment"
+    type: "string"
     required: true
-    description: "Specify Nutanix Files server name"
-    group: "Nutanix Files Settings"
-    show_if: "dynamicFileClass=true"
-  - variable: dynamicFileSquashType
-    label: "Squash Type for NFS"
-    type: enum
-    default: "root-squash"
-    options: ["root-squash", "all-squash", "none"]
-    description: "Specify Nutanix Files Squash Type"
-    group: "Nutanix Files Settings"
-    show_if: "dynamicFileClass=true"
+    group: "global Settings"
+    default: "non-bare-metal"
+    options:
+      - "non-bare-metal"
+      - "bare-metal"

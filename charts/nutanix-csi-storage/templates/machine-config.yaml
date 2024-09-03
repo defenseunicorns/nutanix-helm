@@ -4,6 +4,7 @@ kind: MachineConfig
 metadata:
   labels:
     machineconfiguration.openshift.io/role: master
+    {{- include "nutanix-csi-storage.labels" . | nindent 4 }}
   name: 99-master-ntnx-csi-enable-iscsid
 spec:
   config:
@@ -21,6 +22,7 @@ kind: MachineConfig
 metadata:
   labels:
     machineconfiguration.openshift.io/role: worker
+    {{- include "nutanix-csi-storage.labels" . | nindent 4 }}
   name: 99-worker-ntnx-csi-enable-iscsid
 spec:
   config:
